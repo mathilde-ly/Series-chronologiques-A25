@@ -1,0 +1,64 @@
+---
+title: "Analyse de la consommation d'électricité mensuelle aux Etats-Unis"
+author: "Mathilde Lafay"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    geometry:
+      - top=25mm
+      - bottom=25mm
+      - left=25mm
+      - right=25mm
+lang: fr
+---
+
+# Introduction
+
+1.  Série 9 : Série « elecUS » représentant la consommation mensuelle d’électricité aux USA en milliards de kw/h, débutant en janvier 1983.
+
+```{r librairies}
+
+library(tseries); library(fpp2)
+library(xts);library(seasonal)
+library(astsa)
+library(ggplot2);library(TSA)
+library(forecast);library(timeSeries)
+library(dynlm);library(fma)
+library(nlme);library(expsmooth)
+library(fpp3);library(urca)
+library(caret)
+
+
+```
+
+```{r utilitaires}
+
+# fonction de calcule des t_student des coefficients estimés
+t_stat<-function(entree){
+  se<-sqrt(diag(vcov(entree)))
+  coef.sans.zero=coef(entree)[coef(entree)!=0]
+  result=coef.sans.zero/se
+  return(result)
+
+```
+
+# Analyse Exploratoire
+
+```{r exploration}
+
+elec <- scan("./data/Elec.dat")
+elec
+
+```
+
+# Décomposition et Etude des Composantes
+
+# Lissage Exponentiel et Espace d'Etats
+
+# Modélisation SARIMA
+
+# Test de Robustesse et Comparaison
+
+# Conclusion

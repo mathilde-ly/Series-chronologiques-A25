@@ -1,0 +1,88 @@
+---
+title: "Analyse de la consommation d'électricité mensuelle aux Etats-Unis"
+author: "Mathilde Lafay"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+    geometry:
+      - top=25mm
+      - bottom=25mm
+      - left=25mm
+      - right=25mm
+lang: fr
+---
+```{r librairies}
+library(tseries); library(fpp2)
+library(xts);library(seasonal)
+library(astsa);
+library(ggplot2);library(TSA)
+library(forecast);library(timeSeries)
+library(dynlm);library(fma)
+library(nlme);library(expsmooth)
+library(fpp3);library(urca)
+library(caret)
+```
+
+```{r utilitaires}
+
+# fonction de calcule des t_student des coefficients estimés
+t_stat<-function(entree){
+  se<-sqrt(diag(vcov(entree)))
+  coef.sans.zero=coef(entree)[coef(entree)!=0]
+  result=coef.sans.zero/se
+  return(result)
+}
+
+```
+
+# Introduction
+
+  Dans ce rapport, nous analysons la consommation mensuelle d'électricité aux États-Unis, mesurée en milliards de kWh, de janvier 1983 à octobre 2020. Nous allons explorer les caractéristiques de cette série, la décomposer, appliquer des méthodes de lissage exponentiel et des modèles à espace d'états. Nous tenterons ensuite de tracer les prévisions et les intervalles de prévision de celle ci. Chaque étape sera illustrée graphiquement, et nous effectuerons des tests de robustesse et comparerons les performances des différents modèles et méthodes utilisés.
+  
+# Analyse Exploratoire
+
+La série `Elec` décrit la consommation d'électricité mensuelle aux Etats-Unis, en milliards de kWh de janvier 1983 à octobre 2020. L'étendue de la série est de 139,6 kWh à 421,8 kWh mensuels, et en moyenne sur la période, la consommation américaine était de 254,1 kWh par mois, avec une médiane de 252,5 kWh.
+
+```{r exploration}
+
+elec <-read.table("data/Elec.dat") # lecture du fichier .dat
+elec <- ts(elec, start=c(1983,1), frequency=12) # transformation de l'objet R en une série temporelle
+
+head(elec) # aperçu des premières valeurs de la série
+
+str(elec) # structure de la série
+
+summary(elec) # statistiques descriptives des valeurs de la série
+
+# début et fin de la série
+start(elec) 
+end(elec)
+
+```
+
+
+# Décomposition et Etude des Composantes
+
+```{r}
+# visualisation graphique de la série brute
+autoplot(elec) +
+  ggtitle("Consommation mensuelle d'électricité aux Etats-Unis (1983-2020)") +
+  xlab("Année") + ylab("Consommation (en milliards de kWh)")
+
+ggsave("figures/elec_serie.png")
+```
+
+La série présente une tendance à la hausse sur toute la période, on soupçonne la présence d'hétéroscédasticité à cause de sa forme en "entonnoir". Il nous faudra stationnariser la série en moyenne et en variance à l'aide d'une transformation
+
+
+
+
+# Lissage Exponentiel et Espace d'Etats
+
+# Modélisation SARIMA
+
+# Test de Robustesse et Comparaison
+
+# Conclusion

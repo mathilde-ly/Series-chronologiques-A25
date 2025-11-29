@@ -1,0 +1,1014 @@
+
+
+
+
+
+######################################################################
+##################   Etudes de séries temporelles  ###################
+######################################################################
+
+
+### Mettre le répertoire courant dans "séries" de "Sériestemporelles2025".
+### Télécharger les librairies suivantes :
+
+library(tseries); library(fpp2)
+library(xts);library(seasonal)
+library(astsa);library(caschrono)
+library(ggplot2);library(TSA)
+library(forecast);library(timeSeries)
+library(dynlm);library(fma)
+library(nlme);library(expsmooth)
+library(fpp3);library(urca)
+library(caret)
+
+## Une fonction pour calculer les t_student des coefficients estimés
+t_stat<-function(entree){
+  se<-sqrt(diag(vcov(entree)))
+  coef.sans.zero=coef(entree)[coef(entree)!=0]
+  result=coef.sans.zero/se
+  return(result)
+}
+
+### Remarques importantes :
+
+###  La fonction "Arima" utilisée dans ce programme d'études de Séries Chronologiques
+#    calcule les coefficients autorégressifs et moyennes mobiles sous la forme :
+#    X[t] = a[1]X[t-1] + ... + a[p]X[t-p] + e[t] + b[1]e[t-1] + ... + b[q]e[t-q]
+#    Par rapport à la notation standard, les coefficients a[i] du polynôme autorégressif sont
+#    inchangés, tandis que les coefficients b[j] de la partie moyenne mobile sont changés
+#    de signe, à part le premier b[0], qui vaut "un". Il en est de même, dans le cas d'un
+#    SARIMA, de la partie saisonnière).
+
+
+
+
+########################
+### Modèle avec sim1 ###
+########################
+
+sim1<-scan("sim1.dat")  ## importation de sim1 (200 valeurs)
+sim1<-ts(sim1)  ## fait de sim1 un objet 'série temporelle'
+
+## Tracé de sim1
+autoplot(sim1,main="Série simulée",xlab="Temps",col="blue") ## à commenter
+
+BoxCox.lambda(sim1)
+
+## Tracé des corrélogrammes
+
+sim1 %>% ggtsdisplay  ## à commenter
+
+## Tests de stationnarité
+
+adf.test(sim1)  ## rejet de l'hyp. nulle de racine unitaire
+kpss.test(sim1) ## non rejet de la stationnarité
+
+## Modèle (i)
+
+(fit1<- Arima(sim1,order=c(1,0,0),include.mean = FALSE))
+
+t_stat(fit1) ## fournit les t_stat des coefficients
+
+autoplot(fit1) ## localisation de la racine réelle du polyn. autoreg.
+
+residuals(fit1) %>% ggtsdisplay  ## ACF et PACF des résidus
+
+t.test(residuals(fit1)) ## test de la nullit? de la moyenne des résidus
+
+checkresiduals(fit1) ## fournit en plus le test de Ljung-Box
+
+shapiro.test(fit1$resid)  ## test de la normalité des résidus
+
+
+
+
+
+#########################
+###  Modèle avec sim2 ###
+#########################
+
+sim2<-scan("sim2.dat")  ## importation de sim1 (200 valeurs)
+sim2<-ts(sim2)  ## fait de sim1 un objet série temporelle
+
+## Tracé de sim2
+
+autoplot(sim2,main="Série simulée",xlab="Temps",col="blue") ## à commenter
+
+## Tracé des corrélogrammes
+
+sim2 %>% ggtsdisplay  ## à commenter
+
+## Tests de stationnarité
+
+adf.test(sim2)  ## rejet de l'hyp. nulle de racine unitaire
+kpss.test(sim2) ## non rejet de la stationnarité
+
+### Modèle (i)
+
+(fit1<- Arima(sim2,order=c(0,0,1),include.mean = FALSE))
+
+t_stat(fit1)   ## fournit les t_stat des coefficients
+
+autoplot(fit1) ## localisation de la racine réelle du polyn. MA.
+
+residuals(fit1) %>% ggtsdisplay  ## ACF et PACF des résidus
+
+t.test(residuals(fit1)) ## test de la nullité de la moyenne des résidus
+
+checkresiduals(fit1) ## fournit en plus le test de Ljung-Box
+
+shapiro.test(fit1$resid)  ## test de la normalité des résidus
+
+
+### Modèle (ii)
+
+(fit2<- Arima(sim2,order=c(2,0,0),include.mean = FALSE))
+
+t_stat(fit2)  ## fournit les t_stat des coefficients
+
+autoplot(fit2) ## localisation des racines du polyn. autoreg.
+
+t.test(residuals(fit2)) ## test de la nullité de la moyenne des résidus
+
+residuals(fit2) %>% ggtsdisplay  ## ACF et PACF des résidus
+
+checkresiduals(fit2) ## fournit en plus le test de Ljung-Box
+
+shapiro.test(fit2$resid)  ## test de la normalité des résidus
+
+
+
+
+
+#########################
+###  Modèle avec sim3 ###
+#########################
+
+
+sim3<-scan("sim3.dat")  ## importation de sim1 (200 valeurs)
+sim3<-ts(sim3)  ## fait de sim1 un objet série temporelle
+
+## Tracé de sim3
+
+autoplot(sim3,main="Série simulée",xlab="Temps",col="blue") ## à commenter
+
+
+## Tracé des corrélogrammes
+
+sim3 %>% ggtsdisplay  ## à commenter
+
+## Tests de stationnarité
+
+adf.test(sim3)  ## non rejet de l'hyp. nulle de racine unitaire
+kpss.test(sim3) ## rejet de la stationnarité
+
+## Différenciation (d=1)
+
+dsim3<-diff(sim3)
+
+autoplot(dsim3,main="Série sim3 différenciée (d=1)",xlab="Temps",col="blue") ## à commenter
+
+## Tracé des corrélogrammes de la série différenciée
+
+dsim3 %>% ggtsdisplay  ## à commenter
+
+
+### Modèle (i)
+
+(fit1<- Arima(sim3,order=c(1,1,0),include.mean = FALSE))
+
+t_stat(fit1)  ## fournit les t_stat des coefficients
+
+autoplot(fit1) ## localisation de la racine réelle du polyn. autoreg.
+
+t.test(residuals(fit1)) ## test de la nullité de la moyenne des r?sidus
+
+residuals(fit1) %>% ggtsdisplay  ## ACF et PACF des résidus
+
+checkresiduals(fit1) ## fournit en plus le test de Ljung-Box
+
+shapiro.test(fit1$resid)  ## test de la normalité des résidus
+
+
+### Modèle (ii)
+
+(fit2<- Arima(sim3,order=c(17,1,0),fixed=c(NA, rep(0,15),NA),include.mean = FALSE))
+
+t_stat(fit2)  ## fournit les t_stat des coefficients
+
+autoplot(fit2) ## localisation de la racine réelle du polyn. autoreg.
+
+t.test(residuals(fit2)) ## test de la nullité de la moyenne des résidus
+
+residuals(fit2) %>% ggtsdisplay  ## ACF et PACF des résidus
+
+checkresiduals(fit2) ## fournit en plus le test de Ljung-Box
+
+shapiro.test(fit2$resid)  ## test de la normalité des résidus
+
+
+### Modèle (iii)
+
+(fit3<- Arima(sim3,order=c(1,1,17),fixed=c(NA, rep(0,16),NA),include.mean = FALSE))
+
+t_stat(fit3)  ## fournit les t_stat des coefficients
+
+autoplot(fit3) ## localisation des racines des polyn. autoreg. et MA.
+
+t.test(residuals(fit3)) ## test de la nullité de la moyenne des résidus
+
+residuals(fit3) %>% ggtsdisplay  ## ACF et PACF des résidus
+
+checkresiduals(fit3) ## fournit en plus le test de Ljung-Box
+
+shapiro.test(fit3$resid)  ## test de la normalité des résidus
+
+
+
+
+###########################
+###  Modèle avec nottem ###
+###########################
+
+
+## Il s'agit des températures mensuelles à Nottingham Castle de janvier 1920 à décembre 1939.
+
+nott<- (nottem-32)/1.8 ## transforme les degrés Fahrenheit en Celsius
+
+## Tracé de nott
+
+autoplot(nott,main="Série températures à Nottingham",xlab="Temps",col="blue") ## à commenter
+
+## Tests de stationnarité
+
+adf.test(nott)
+kpss.test(nott)
+
+
+## Saisonnalité
+
+ggseasonplot(nott, year.labels=TRUE, year.labels.left=TRUE) +ylab("Température en degrés Celsius") + ggtitle("Graphe saisonnier: Températures à Nottingham Castle")
+
+
+## Décomposition
+
+fit <- decompose(nott, type="additive")
+
+autoplot(fit) + xlab("Année") +ggtitle("Décomposition additive de la série Températures")
+
+
+## Tracé des corrélogrammes
+
+nott %>% ggtsdisplay  ## à commenter
+
+
+## Différenciation (D=1)
+
+dnott<-diff(nott,12)
+
+autoplot(dnott,main="Série différenciée des températures mensuelles à Nottingham Castle (D=1)",xlab="Ann?es",col="blue") ## ? commenter
+
+
+
+## Tracé des corrélogrammes de la série différenciée (D=1) :
+
+dnott %>% ggtsdisplay  ## à commenter
+
+
+### Modèle (i)
+
+(fit1<- Arima(nott,order=c(1,0,0),seasonal=c(1,1,0),include.mean = FALSE))
+
+t_stat(fit1)  ## fournit les t_stat des coefficients
+
+autoplot(fit1) ## localisation des racines des polyn. autoreg.
+
+t.test(residuals(fit1))  ## test de la nullité de la moyenne des résidus
+
+residuals(fit1) %>% ggtsdisplay  ## ACF et PACF des résidus
+
+
+
+### Modèle (ii)
+
+(fit2<- Arima(nott,order=c(1,0,0),seasonal=c(2,1,0),include.mean = FALSE))
+
+t_stat(fit2) ## fournit les t_stat des coefficients
+
+autoplot(fit2) ## localisation des racines des polyn. autoreg.
+
+t.test(residuals(fit2))
+
+residuals(fit2) %>% ggtsdisplay  ## ACF et PACF des résidus
+
+checkresiduals(fit2) ## fournit en plus le test de Ljung-Box
+
+shapiro.test(fit2$resid)  ## test de la normalité des résidus
+
+
+
+### Prévision avec le modèle (ii)
+
+fit2 %>% forecast(h=24) %>% autoplot + ylab("Températures mensuelles à Nottingham Castle")+xlab("Années")
+
+## ou en zoomant
+
+fit2 %>% forecast(h=24) %>% autoplot(xlim=c(1938,1942)) + ylab("Températures mensuelles à Nottingham Castle")+xlab("Années") ## zoom
+
+
+
+### Essai de robustesse sur un an.
+
+
+train<-window(nott,end=c(1938,12))
+
+test<-window(nott,start=c(1939,1))
+
+h<-length(test)
+
+(nott.modele<-Arima(train,order=c(1,0,0),seasonal=list(order=c(2,1,0),period=12),lambda=1))
+
+t_stat(nott.modele)
+
+autoplot(nott.modele)
+
+t.test(residuals(nott.modele))
+
+residuals(nott.modele) %>% ggtsdisplay
+
+checkresiduals(nott.modele)
+
+shapiro.test(nott.modele$resid)
+
+plot(forecast(nott.modele,h=h))
+lines(nott)
+
+plot(forecast(nott.modele,h=h),xlim=c(1938,1940)) ## zoom
+lines(nott)
+
+
+
+
+
+
+#############################
+###  Vente de corticoïdes ###
+#############################
+
+
+## Il s'agit de la série mensuelle de "ventes de corticoïdes" de juillet 1991 à juin 2008.
+
+
+### Série brute (lecture des données et tracé)
+
+corti<-h02 ## lit les données
+
+autoplot(corti,main="Ventes mensuelles de corticoïdes",xlab="Années",col="blue") ## commenter
+
+### Homoscédasticité
+
+BoxCox.lambda(corti)
+
+
+### Série des logs
+
+lcorti <- log(corti)
+
+cbind("Ventes de corticoïdes" = corti,
+      "Log de ventes de cortic."=lcorti) %>%
+  autoplot(facets=TRUE) + xlab("Années") + ylab("")
+
+### Saisonnalité
+
+ggseasonplot(corti, year.labels=TRUE, year.labels.left=TRUE) +ylab("Ventes mensuelles") + ggtitle("Ventes mensuelles de corticoïdes")
+
+
+### Corrélogrammes pour la série des logs
+
+lcorti %>%  ggtsdisplay(lag=48)
+
+
+### Corrélogrcorti### Corrélogrammes pour la série des logs différenciée saisonnièrement (D=1)
+
+lcorti %>% diff(lag=12) %>%
+  ggtsdisplay(xlab="Années", main="Série logarithme de corticoïde différenciée saisonnièrement") ## commenter
+
+
+### D=1 et d=1 ou seulement D=1 ?
+
+adf.test(diff(lcorti,12))
+kpss.test(diff(lcorti,12))
+
+
+### Corrélogrammes pour la série des logs différenciée saisonnièrement et non (D=1 et d=1)
+
+acf2(diff(diff(lcorti,12)))
+
+
+### Modèle (i)
+
+(fit<-Arima(corti,order=c(0,1,1),seasonal=list(order=c(0,1,1),period=12),lambda=0))
+
+t_stat(fit)
+
+autoplot(fit)
+
+residuals(fit) %>% ggtsdisplay
+
+
+### Modèle (ii)
+
+acf2(diff(diff(lcorti,12)))
+
+(fit1<-Arima(corti,order=c(0,1,4),fixed=c(NA,0,0,NA,NA),seasonal=list(order=c(0,1,1),period=12),lambda=0))
+
+t_stat(fit1)
+
+autoplot(fit1)
+
+residuals(fit1) %>% ggtsdisplay
+
+
+
+### Modèle (iii)
+
+acf2(diff(diff(lcorti,12)))
+
+(fit3<-Arima(corti,order=c(1,1,4),fixed=c(NA,NA,0,0,NA,NA),seasonal=list(order=c(0,1,1),period=12),lambda=0))
+
+t_stat(fit3)
+
+autoplot(fit3)
+
+residuals(fit3) %>% ggtsdisplay
+
+
+### Modèle (iv)
+
+acf2(diff(diff(lcorti,12)))
+
+(fit4<-Arima(corti,order=c(2,1,4),fixed=c(NA,NA,NA,0,0,NA,NA),seasonal=list(order=c(0,1,1),period=12),lambda=0))
+
+t_stat(fit4)
+
+autoplot(fit4)
+
+residuals(fit4) %>% ggtsdisplay
+
+
+### Modèle (v)
+
+(fit5<-Arima(corti,order=c(2,1,4),fixed=c(NA,NA,0,0,0,NA,NA),seasonal=list(order=c(0,1,1),period=12),lambda=0))
+
+t_stat(fit5)
+
+autoplot(fit5)
+
+residuals(fit5) %>% ggtsdisplay
+
+t.test(residuals(fit5))
+
+checkresiduals(fit5)
+
+shapiro.test(fit5$resid)
+
+
+
+### Modèle (vi)  Après quelques autres essais
+
+
+(fit6<-Arima(corti,order=c(2,1,3),fixed=c(NA,NA,0,NA,NA,NA),seasonal=list(order=c(0,1,1),period=12),lambda=0))
+
+t_stat(fit6)
+
+autoplot(fit6)
+
+residuals(fit6) %>% ggtsdisplay
+
+t.test(residuals(fit6))
+
+checkresiduals(fit6)
+
+shapiro.test(fit6$resid)
+
+### Attention : les intervalles de prévision sont ininterprétables car les résidus sont
+### non gaussiens.
+
+
+### Prévisions avec le modèle (vi)
+
+h=24
+
+fit6 %>% forecast(h=h) %>% autoplot + ylab("Ventes mensuelles de corticoïdes")+xlab("Années")
+
+
+## ou en zoomant
+
+fit6 %>% forecast(h=24) %>% autoplot(xlim=c(2006,2011),ylim=c(0.5,1.75)) + ylab("Ventes mensuelles de corticoïdes")+xlab("Années") ## zoom
+
+accuracy(fit6)  ## mesures d'erreur
+
+
+#####  Prévisions par ets
+
+(fit<-ets(corti))
+
+### Prévisions par le modèle ets
+
+fit %>% forecast(h=24) %>%
+  autoplot() +
+  ylab("Ventes de corticoïdes")
+
+
+fit %>% forecast(h=24) %>% autoplot(xlim=c(2006,2011),ylim=c(0.5,1.75)) + ylab("Ventes mensuelles de corticoïdes")+xlab("Années") ## zoom
+
+accuracy(fit)  ## mesures d'erreur
+
+
+#### Le modèle ARIMA semble meilleur que le modèle ets !!!!
+
+
+### Calcul des intervalles de prévision via la méthode des quantiles pour le modèle où la gaussianité est invalidée :
+
+
+data<- corti ## pour mettre la série étudiée dans le vecteur 'data'.
+
+nd=length(data) ## longueur de la série brute
+
+saison=12 ## pour cet exemple !
+
+time1=start(time(corti)) ## date du début de la série
+
+time2=sum(end(data)*c(1,1/saison))   #date de la première prévision
+
+n.ahead=24 ## nombre de prévisions (ici 24)
+
+alpha=0.95 ## borne de confiance de 95 %
+
+beta=0.85 ## borne de confiance de 85 %
+
+prev<-numeric(n.ahead) ; a<-matrix(nrow=nd, ncol=n.ahead); qalpha<-numeric(n.ahead); err<-matrix(nrow=nd, ncol=n.ahead)
+qbeta<-numeric(n.ahead); fit<-numeric(n.ahead) ## pour le dimensionnement des vecteurs et matrices de travail
+
+nmin=floor(nd/3) ## valeur minimale du temps pour utiliser le modèle choisi à des fins d'estimation et de prévision
+
+
+for (j in nmin:(nd-1)) {
+  fit<-Arima(corti[1:j],order=c(2,1,4),fixed=c(NA,NA,0,0,0,NA,NA),seasonal=list(order=c(0,1,1),period=12),lambda=0)
+  prev<-forecast(fit,n.ahead)$mean
+  for (m in 1:n.ahead) {
+    a[j+1,m]=prev[m]
+  }
+}
+err<-matrix(0,nrow=nd, ncol=n.ahead)
+for (j in nmin:nd){
+  for (i in 1:n.ahead) {
+    if (i+j-1<=nd) {
+      err[j,i]=a[j,i]-data[j+i-1]}
+  }
+}
+
+
+
+for (i in 1:(n.ahead)){
+  qalpha[i]=quantile(err[,i][!is.na(err[,i])],probs=alpha)
+  qbeta[i]=quantile(err[,i][!is.na(err[,i])],probs=beta)
+}
+int=ts(qalpha,start=time2,frequency=saison)
+int1=ts(qbeta,start=time2,frequency=saison)
+
+
+### Tracé des prévisions  avec zoom sur la queue de la série  - 100 dernières valeurs
+# n.ahead= nombre de prévisions
+
+prev<-ts(prev,start=time2,frequency=12)
+
+#-- graphe
+U=prev+int
+L=prev-int
+a=max(1,nd-100)
+minx=min(data[a:nd],L)
+maxx=max(data[a:nd],U)
+t1=xy.coords(data, y = NULL)$x
+if(length(t1)<101) strt=t1[1] else strt=t1[length(t1)-100]
+t2=xy.coords(prev, y = NULL)$x
+endd=t2[length(t2)]
+xllim=c(strt,endd)
+ts.plot(data,prev,col=1:2, type="o", xlim=xllim, ylim=c(minx,maxx), main="Prévisions à l'horizon 12")
+lines(prev, col="red", type="p")
+lines(U, col="blue", lty="dashed")
+lines(L, col="blue", lty="dashed")
+lines(prev)
+abline(v=time2-1/(2*saison),lty=3)
+par(mfrow=c(1,1))
+
+
+### Prévisions avec zoom sur la queue de la série et bande de confiance colorée - 100 dernières valeurs
+# n.ahead= nombre de prévisions
+
+#-- graph:
+U = prev+int
+L = prev-int
+U80 = prev+int1
+L80 = prev-int1
+a=max(1,nd-100)
+minx=min(data[a:nd],L,L80)
+maxx=max(data[a:nd],U,U80)
+t1=xy.coords(data, y = NULL)$x
+if(length(t1)<101) strt=t1[1] else strt=t1[length(t1)-100]
+t2=xy.coords(prev, y = NULL)$x
+it2<- rev(sort(t2))
+endd=t2[length(t2)]
+xllim=c(strt,endd)
+ts.plot(data,prev,col=1:2, type="o", xlim=xllim, ylim=c(minx,maxx), main="Pr?visions avec intervalles de pr?visions ? 85 % et 95 %")
+xx<- c(t2,it2)
+yy<-c(L,rev(U))
+zz<-c(L80,rev(U80))
+polygon(xx,yy,col="orange", border="NA")
+polygon(xx,zz,col="yellow",border="NA")
+lines((prev), col="red", type="o")
+lines(U, col="blue", lty="dashed")
+lines(L, col="blue", lty="dashed")
+lines(prev)
+abline(v=time2-1/(2*saison),lty=3)
+par(mfrow=c(1,1))
+
+
+
+### Prévisions avec zoom sur la queue de la série et bande de confiance colorée - 30 dernières valeurs
+# n.ahead= nombre de prévisions
+
+#-- graph:
+U =prev+int
+L = prev-int
+U80 = prev+int1
+L80 = prev-int1
+a=max(1,nd-30)
+minx=min(data[a:nd],L,L80)
+maxx=max(data[a:nd],U,U80)
+t1=xy.coords(data, y = NULL)$x
+if(length(t1)<31) strt=t1[1] else strt=t1[length(t1)-30]
+t2=xy.coords(prev, y = NULL)$x
+it2<- rev(sort(t2))
+endd=t2[length(t2)]
+xllim=c(strt,endd)
+ts.plot(data,prev,col=1:2, type="o", xlim=xllim, ylim=c(minx,maxx), main="Prévisions avec intervalles de prévisions à 85 % et 95 %")
+xx<- c(t2,it2)
+yy<-c(L,rev(U))
+zz<-c(L80,rev(U80))
+polygon(xx,yy,col="orange", border="NA")
+polygon(xx,zz,col="yellow",border="NA")
+lines((prev), col="red", type="o")
+lines(U, col="blue", lty="dashed")
+lines(L, col="blue", lty="dashed")
+lines(prev)
+abline(v=time2-1/(2*saison),lty=3)
+par(mfrow=c(1,1))
+
+
+
+
+### Essai de robustesse sur deux ans.
+
+
+train<-window(corti,end=c(2006,5))
+test<-window(corti,start=c(2006,6))
+h<-length(test)
+
+(corti.modele<-Arima(train,order=c(2,1,3),fixed=c(NA,NA,0,NA,NA,NA),seasonal=list(order=c(0,1,1),period=12),lambda=0))
+t_stat(corti.modele)
+
+autoplot(corti.modele)
+residuals(corti.modele) %>% ggtsdisplay
+
+checkresiduals(corti.modele)
+
+shapiro.test(corti.modele$resid)
+
+plot(forecast(corti.modele,h=h))
+lines(corti)
+
+plot(forecast(corti.modele,h=h),xlim=c(2005.1,2008.6)) ## zoom
+lines(corti)
+
+accuracy(corti.modele)  ## mesures d'erreur
+
+
+### Robustesse par ets
+
+fit1.modele<-ets(train)
+plot(forecast(fit1.modele))
+lines(corti)
+
+plot(forecast(fit1.modele),xlim=c(2005.1,2008.6)) ## zoom
+lines(corti)
+
+accuracy(fit1.modele)
+
+###  L'approche de Box et Jenkins semble meilleure ###
+
+
+####### Autre calcul de l'intervalle de prévision par la méthode de la validation croisée
+
+data<- corti ## pour mettre la série étudiée dans le vecteur 'data'.
+
+nd=length(data) ## longueur de la série brute
+
+saison=12 ## pour cet exemple !
+
+time1=start(time(corti)) ## date du début de la série
+
+time2=sum(end(data)*c(1,1/saison))   #date de la première prévision
+
+n.ahead=24 ## nombre de prévisions (ici 24)
+
+alpha=0.95 ## borne de confiance de 95 %
+
+beta=0.85 ## borne de confiance de 85 %
+qalpha<-numeric(n.ahead) ; qbeta=numeric(n.ahead)
+
+
+h=24
+for (j in 1:h) {
+  ff <- function(x, h){forecast(Arima(x,order=c(2,1,3),fixed=c(NA,NA,0,NA,NA,NA),seasonal=list(order=c(0,1,1),period=12),lambda=0))}
+  e <- tsCV(corti, ff, h=j)
+  qalpha[j]=quantile(e[!is.na(e)],probs=0.95)
+  qbeta[j]=quantile(e[!is.na(e)],probs=0.80)
+}
+
+prev<-forecast(fit6,n.ahead)$mean
+prev<-ts(prev,start=time2,frequency=12)
+int=ts(qalpha,start=time2,frequency=saison)
+int1=ts(qbeta,start=time2,frequency=saison)
+
+
+### Tracé des prévisions  avec zoom sur la queue de la série  - 100 dernières valeurs
+# n.ahead= nombre de prévisions
+
+prev<-ts(prev,start=time2,frequency=12)
+
+#-- graphe
+U = prev+int
+L = prev-int
+U80 = prev+int1
+L80 = prev-int1
+a=max(1,nd-100)
+minx=min(data[a:nd],L,L80)
+maxx=max(data[a:nd],U,U80)
+t1=xy.coords(data, y = NULL)$x
+if(length(t1)<101) strt=t1[1] else strt=t1[length(t1)-100]
+t2=xy.coords(prev, y = NULL)$x
+it2<- rev(sort(t2))
+endd=t2[length(t2)]
+xllim=c(strt,endd)
+ts.plot(data,prev,col=1:2, type="o", xlim=xllim, ylim=c(minx,maxx), main="Prévisions avec intervalles de prévisions à 85 % et 95 %")
+xx<- c(t2,it2)
+yy<-c(L,rev(U))
+zz<-c(L80,rev(U80))
+polygon(xx,yy,col="orange", border="NA")
+polygon(xx,zz,col="yellow",border="NA")
+lines((prev), col="red", type="o")
+lines(U, col="blue", lty="dashed")
+lines(L, col="blue", lty="dashed")
+lines(prev)
+abline(v=time2-1/(2*saison),lty=3)
+par(mfrow=c(1,1))
+
+
+
+### Tracé des prévisions  avec zoom sur la queue de la série  - 30 dernières valeurs
+# n.ahead= nombre de prévisions
+
+#-- graph:
+U =prev+int
+L = prev-int
+U80 = prev+int1
+L80 = prev-int1
+a=max(1,nd-30)
+minx=min(data[a:nd],L,L80)
+maxx=max(data[a:nd],U,U80)
+t1=xy.coords(data, y = NULL)$x
+if(length(t1)<31) strt=t1[1] else strt=t1[length(t1)-30]
+t2=xy.coords(prev, y = NULL)$x
+it2<- rev(sort(t2))
+endd=t2[length(t2)]
+xllim=c(strt,endd)
+ts.plot(data,prev,col=1:2, type="o", xlim=xllim, ylim=c(minx,maxx), main="Prévisions avec intervalles de prévisions à 85 % et 95 %")
+xx<- c(t2,it2)
+yy<-c(L,rev(U))
+zz<-c(L80,rev(U80))
+polygon(xx,yy,col="orange", border="NA")
+polygon(xx,zz,col="yellow",border="NA")
+lines((prev), col="red", type="o")
+lines(U, col="blue", lty="dashed")
+lines(L, col="blue", lty="dashed")
+lines(prev)
+abline(v=time2-1/(2*saison),lty=3)
+par(mfrow=c(1,1))
+
+
+
+
+##################################################
+###  Nombre mensuel de prescriptions médicales ###
+##################################################
+
+### Lecture des données
+
+data<-read.table("data.dat")
+data<-ts(data,,start=c(2001,7),frequency=12)
+
+
+### Graphe de la série brute
+
+autoplot(data,main="Nombre de prescriptions médicales",xlab="Années",ylab="Nombre de prescriptions (x 10**7)",col="blue")
+
+## Décomposition
+
+fit1 <- decompose(data, type="multiplicative")
+
+autoplot(fit1) + xlab("Année") +ggtitle("Décomposition additive de la série Prescriptions")
+
+
+### Homoscédasticité
+
+BoxCox.lambda(data)
+lambda<- BoxCox.lambda(data)
+
+### Série des racines carrées
+
+rdata <- sqrt(data)
+
+cbind("Nombre de prescriptions" = data,
+      "Racine carrée des prescriptions"=rdata) %>%
+  autoplot(facets=TRUE) + xlab("Années") + ylab("")
+
+### Corrélogrammes pour la série des racines carrées
+
+rdata %>%  ggtsdisplay(lag=48)
+
+
+### Corrélogrammes pour la série des racines carrées différenciée saisonnièrement (D=1)
+
+rdata %>% diff(lag=12) %>%
+  ggtsdisplay(xlab="Années", main="Série racine carrée des prescriptions avec D=1") ## commenter
+
+
+### D=1 et d=1 ou seulement D=1 ?
+
+kpss.test(diff(rdata,12))
+
+### Corrélogrammes pour la série des racines carrées différenciée saisonnièrement et non saisonnièrement (D=1 et d=1)
+
+acf2(diff(diff(rdata,12)))
+
+### Modèle (i)
+
+(fit1<-Arima(data,order=c(4,1,1),seasonal=list(order=c(0,1,2),period=12),fixed=c(NA,NA,0,NA,NA,NA,NA),lambda=lambda))
+
+t_stat(fit1)
+
+### Modèle (ii)
+
+(fit2<-Arima(data,order=c(4,1,1),seasonal=list(order=c(0,1,2),period=12),fixed=c(NA,0,0,NA,NA,NA,NA),lambda=lambda))
+
+t_stat(fit2)
+
+autoplot(fit2)
+
+residuals(fit2) %>% ggtsdisplay
+
+t.test(residuals(fit2))
+
+checkresiduals(fit2)
+
+shapiro.test(fit2$resid)
+
+### Modèle (iii)
+
+(fit3<-Arima(data,order=c(4,1,1),seasonal=list(order=c(0,1,2),period=12),fixed=c(0,0,0,NA,NA,NA,NA),lambda=lambda))
+
+t_stat(fit3)
+
+autoplot(fit3)
+
+residuals(fit3) %>% ggtsdisplay
+
+t.test(residuals(fit3))
+
+checkresiduals(fit3)
+
+shapiro.test(fit3$resid)
+
+
+
+###  Autre modèle trouvé après quelques essais
+
+(fit<-Arima(data,order=c(1,1,1),seasonal=list(order=c(0,1,2),period=12),lambda=lambda))
+
+t_stat(fit)
+
+autoplot(fit)
+
+residuals(fit) %>% ggtsdisplay
+
+t.test(residuals(fit))
+
+checkresiduals(fit)
+
+shapiro.test(fit$resid)
+
+
+### Prévisions sur deux ans avec les intervalles de prévision
+
+h=12
+
+fit3 %>% forecast(h=h) %>% autoplot + ylab("Nombre de prescriptions")+xlab("Années")
+
+
+## ou en zoomant
+
+fit3 %>% forecast(h=12) %>% autoplot(xlim=c(2015,2021),ylim=c(12,35)) + ylab("Nombre de prescriptions")+xlab("Années") ## zoom
+
+### Prévisions par ets ###
+
+h=12
+fit4<-ets(data)
+forecast(fit4,h=h) %>% autoplot(xlab="Années")
+forecast(fit4,h=h) %>% autoplot(xlab="Années",xlim=c(2014,2020),ylim=c(12,38)) ## zoom
+
+
+
+### Essai de robustesse sur deux ans.
+
+
+train<-window(data,end=c(2016,6))
+
+test<-window(data,start=c(2016,7))
+
+h<-length(test)
+
+(modele<-Arima(train,order=c(4,1,1),seasonal=list(order=c(0,1,2),period=12),fixed=c(0,0,0,NA,NA,NA,NA),lambda=lambda))
+
+t_stat(modele)
+
+autoplot(modele)
+
+t.test(residuals(modele))
+
+residuals(modele) %>% ggtsdisplay
+
+checkresiduals(modele)
+
+shapiro.test(modele$resid)
+
+
+
+
+plot(forecast(modele,h=h))
+lines(data)
+
+plot(forecast(modele,h=h),xlim=c(2014.1,2018.6),ylim=c(12,25.5)) ## zoom
+lines(data)
+
+
+
+accuracy(modele)  ## mesures d'erreur
+
+
+### Calcul des racines des polynômes autorégressif et moyenne mobile
+
+p=4; P=0
+q=1 ; Q=2
+d=1 ; D=1
+S=12
+
+(prod.fit1<-Arima(train,order=c(4,1,1),seasonal=list(order=c(0,1,2),period=12),fixed=c(0,0,0,NA,NA,NA,NA),lambda=lambda))
+
+# Racines de la partie "Autorégressive"
+if(p+P>0) {alpha=c(1,rep(0,P*S+p))
+if(P==0) {for (i in 1:p){alpha[i+1]=-prod.fit1$coef[i]}} else {for (i in 1:P) {alpha[S*i+1]=-prod.fit1$coef[p+q+i]}}
+if(p>0) { for (i in 1:p) { alpha[1+i]=-prod.fit1$coef[i]
+if(P>0) {for (j in 1:P) alpha[j*S+i+1]=prod.fit1$coef[i]*prod.fit1$coef[p+q+j]}}}
+polyroot(alpha) #racines du polynôme autorégressif
+abs(polyroot(alpha))  }  # modules des racines du polynôme autorégressif
+
+# Racines de la partie "Moyenne Mobile"
+if(q+Q>0) {beta=c(1,rep(0,Q*S+q))}
+if(Q==0) {for (i in 1:q){beta[i+1]=prod.fit1$coef[p+i]}} else {for (i in 1:Q) {beta[S*i+1]=prod.fit1$coef[p+q+P+i]}}
+if(q>0) { for (i in 1:q) { beta[1+i]=prod.fit1$coef[p+i]
+if(Q>0) {for (j in 1:Q) beta[j*S+i+1]=prod.fit1$coef[p+i]*prod.fit1$coef[p+q+P+j]}}}
+polyroot(beta)  #racines du polynôme moyenne mobile
+abs(polyroot(beta))  #modules des racines du polynôme moyenne mobile
+
+#### Robustesse par ets
+
+fit2.modele<-ets(train)
+plot(forecast(fit2.modele))
+lines(data)
+
+plot(forecast(fit2.modele),xlim=c(2015.1,2018.6),ylim=c(12,27)) ## zoom
+lines(data)
+
+accuracy(fit2.modele) ### le modèle ets semble jusqu'ici le meilleur !
+
